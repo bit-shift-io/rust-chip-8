@@ -4,7 +4,7 @@ mod memory;
 mod display;
 mod stack;
 
-use std::time::Duration;
+use std::{path::Path, time::Duration};
 
 use computer::Computer;
 use sdl2::{event::Event, keyboard::Keycode};
@@ -17,7 +17,7 @@ pub struct Context<'a> {
     pub sdl: &'a mut SdlSystem,
 }
 
-pub fn run(sdl: &mut SdlSystem) -> Result<(), String> {
+pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
     let mut event_pump = sdl.sdl_context.event_pump()?;
 
     'running: loop {
@@ -44,6 +44,7 @@ pub fn run(sdl: &mut SdlSystem) -> Result<(), String> {
             //let current_scene = &mut self.scenes[self.current_scene_idx];
             //current_scene.update(&mut context);
             //current_scene.draw(&mut context);
+            computer.update();
         }
 
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
@@ -55,5 +56,6 @@ pub fn run(sdl: &mut SdlSystem) -> Result<(), String> {
 fn main() -> Result<(), String> {
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 480);
     let mut computer = Computer::new();
-    run(&mut sdl)
+    computer.load_program_from_file(Path::new("roms/IBM Logo.ch8"));
+    run(&mut sdl, &mut computer)
 }

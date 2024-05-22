@@ -5,7 +5,7 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Self {
-        let memory = [0u8; 4096];
+        let memory = [0; 4096];
         Self {
             memory,
         }
@@ -15,5 +15,16 @@ impl Memory {
         // https://stackoverflow.com/questions/25225346/how-do-you-copy-between-arrays-of-different-sizes-in-rust
         let end_address = start_address + data.len();
         self.memory[start_address..end_address].copy_from_slice(&data);
+    }
+
+    pub fn read_u8_array(&self, address: usize, output: &mut [u8]) {
+        let end_address = address + output.len();
+        output.copy_from_slice(&self.memory[address..end_address]);
+    }
+
+    pub fn read_u16(&self, address: usize) -> u16 {
+        let mut bytes = [0; 2];
+        self.read_u8_array(address, &mut bytes);
+        u16::from_be_bytes(bytes)
     }
 }

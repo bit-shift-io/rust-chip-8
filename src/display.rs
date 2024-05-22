@@ -8,4 +8,8 @@ impl Display {
             buffer: [0; 64 * 32],
         }
     }
+
+    pub fn clear(&mut self) {
+        self.buffer = [0; 64 * 32];
+    }
 }
