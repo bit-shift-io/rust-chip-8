@@ -38,15 +38,6 @@ const OP_2 : u16 = 0x2000;
 const OP_6 : u16 = 0x6000;
 const OP_7 : u16 = 0x7000;
 
-const OP_CLS: u16 = 0xE000;
-const OP_RET: u16 = 0xEE00;
-const OP_JP: u16 = 0x1000;
-const OP_SET_VX: u16 = 0x6000;
-const OP_ADD_VX: u16 = 0x7000;
-const OP_SET_I: u16 = 0xA000;
-const OP_DXYN: u16 = 0xD000;
-
-
 pub struct Computer {
     memory: Memory,
     display: Display,
