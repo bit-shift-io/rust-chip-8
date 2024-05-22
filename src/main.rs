@@ -1,10 +1,17 @@
 mod sdl_system;
+mod computer;
+mod memory;
+mod display;
+mod stack;
 
 use std::time::Duration;
 
+use computer::Computer;
 use sdl2::{event::Event, keyboard::Keycode};
 
 use crate::sdl_system::SdlSystem;
+
+
 
 pub struct Context<'a> {
     pub sdl: &'a mut SdlSystem,
@@ -47,5 +54,6 @@ pub fn run(sdl: &mut SdlSystem) -> Result<(), String> {
 
 fn main() -> Result<(), String> {
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 480);
+    let mut computer = Computer::new();
     run(&mut sdl)
 }
