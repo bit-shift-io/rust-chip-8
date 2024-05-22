@@ -22,6 +22,12 @@ impl Memory {
         output.copy_from_slice(&self.memory[address..end_address]);
     }
 
+    pub fn read_u8(&self, address: usize) -> u8 {
+        let mut bytes = [0; 1];
+        self.read_u8_array(address, &mut bytes);
+        bytes[0]
+    }
+
     pub fn read_u16(&self, address: usize) -> u16 {
         let mut bytes = [0; 2];
         self.read_u8_array(address, &mut bytes);

@@ -1,6 +1,7 @@
 
 use crate::memory::Memory;
 use crate::display::Display;
+use crate::sdl_system::SdlSystem;
 use crate::stack::Stack;
 
 use std::fs;
@@ -78,7 +79,7 @@ impl Computer {
         let opcode = OP_CODE_MASK & instruction;
         match opcode {
             OP_0 => {
-                self.cls(instruction)
+                self.clear_screen(instruction)
             },
 
             OP_E => {
@@ -123,7 +124,7 @@ impl Computer {
         self.program_counter = self.stack.pop() as usize;
     }
 
-    fn cls(&mut self, _instruction: u16) {
+    fn clear_screen(&mut self, _instruction: u16) {
         self.display.clear();
     }
 
@@ -132,8 +133,16 @@ impl Computer {
         self.index_register = value as usize;
     }
 
-    fn display(&mut self, _instruction: u16) {
-        println!("todo: display")
+    fn display(&mut self, instruction: u16) {
+        let x_reg_idx = (instruction & 0x0F00) >> 8;
+        let y_reg_idx = (instruction & 0x00F0) >> 4;
+        let num_rows = instruction & 0xF;
+        let x = self.registers[x_reg_idx as usize];
+        let y = self.registers[y_reg_idx as usize];
+        //let mut sprite: [u8; 16] = [0; 16];
+        //self.memory.read_u8_array(self.index_register, &sprite);
+        let vf = self.display.xor_sprite(x, y, num_rows, &self.memory, self.index_register);
+        self.registers[0xF] = vf;
     }
 
     fn jump(&mut self, instruction: u16) {
@@ -151,6 +160,10 @@ impl Computer {
         let register = (instruction & 0x0F00) >> 8;
         let value = instruction & 0x00FF;
         self.registers[register as usize] += value;
+    }
+
+    pub fn draw(&mut self, sdl: &mut SdlSystem) {
+        self.display.draw(sdl);
     }
 }
 

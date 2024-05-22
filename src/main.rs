@@ -40,11 +40,12 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
         }
 
         {
-            //let mut context = Context{ sdl };
+            let mut context = Context{ sdl };
             //let current_scene = &mut self.scenes[self.current_scene_idx];
             //current_scene.update(&mut context);
             //current_scene.draw(&mut context);
             computer.update();
+            computer.draw(sdl);
         }
 
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
@@ -54,7 +55,7 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
 }
 
 fn main() -> Result<(), String> {
-    let mut sdl = SdlSystem::new("Rust Chip-8", 640, 480);
+    let mut sdl = SdlSystem::new("Rust Chip-8", 640, 320);
     let mut computer = Computer::new();
     computer.load_program_from_file(Path::new("roms/IBM Logo.ch8"));
     run(&mut sdl, &mut computer)

@@ -1,6 +1,7 @@
 use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
+use sdl2::rect::Rect;
 use sdl2::Sdl;
 use sdl2::video::WindowPos;
 use sdl2::render::WindowCanvas;
@@ -51,6 +52,19 @@ impl SdlSystem {
     pub fn draw_line(&mut self, start: Point, end: Point, color: Color) {
         self.canvas.set_draw_color(color);
         self.canvas.draw_line(start, end).unwrap();
+    }
+
+    pub fn draw_filled_rect(&mut self, pos: Point, size: Point, color: Color) {
+        self.canvas.set_draw_color(color);
+
+        let pos_x = i32::try_from(pos.x).unwrap();
+        let pos_y = i32::try_from(pos.y).unwrap();
+
+        let width = u32::try_from(size.x).unwrap();
+        let height = u32::try_from(size.y).unwrap();
+
+        let rect = Rect::new(pos_x, pos_y, width, height);
+        self.canvas.draw_rect(rect).unwrap();
     }
 
     pub fn draw_filled_circle(&self, point: Point, radius: i32, color: Color) {
