@@ -54,8 +54,7 @@ pub struct Computer {
 
     program_counter: usize,
     index_register: usize,
-
-
+    registers: [u16; 16],
 }
 
 impl Computer {
@@ -69,6 +68,7 @@ impl Computer {
             stack: Stack::new(),
             program_counter: 0,
             index_register: 0,
+            registers: [0; 16],
         }
     }
 
@@ -151,15 +151,15 @@ impl Computer {
     }
 
     fn set_register(&mut self, instruction: u16) {
-        let register = instruction & 0x0F00;
+        let register = (instruction & 0x0F00) >> 8;
         let value = instruction & 0x00FF;
-        println!("todo: set_register")
+        self.registers[register as usize] = value;
     }
 
     fn add_register(&mut self, instruction: u16) {
-        let register = instruction & 0x0F00;
+        let register = (instruction & 0x0F00) >> 8;
         let value = instruction & 0x00FF;
-        println!("todo: add_register")
+        self.registers[register as usize] += value;
     }
 }
 
