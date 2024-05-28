@@ -36,8 +36,12 @@ const OP_D : u16 = 0xD000;
 const OP_0 : u16 = 0x0000;
 const OP_1 : u16 = 0x1000;
 const OP_2 : u16 = 0x2000;
+const OP_3 : u16 = 0x3000;
+const OP_4 : u16 = 0x4000;
+const OP_5 : u16 = 0x5000;
 const OP_6 : u16 = 0x6000;
 const OP_7 : u16 = 0x7000;
+const OP_9 : u16 = 0x9000;
 
 pub struct Computer {
     memory: Memory,
@@ -102,15 +106,71 @@ impl Computer {
                 self.call_subroutine(instruction)
             },
 
+            OP_3 => {
+                self.skip_if_equal(instruction)
+            }
+
+            OP_4 => {
+                self.skip_if_not_equal(instruction)
+            }
+
+            OP_5 => {
+                self.skip_if_registers_equal(instruction)
+            },
+
             OP_6 => {
                 self.set_register(instruction);
             },
 
             OP_7 => {
                 self.add_register(instruction);
-            }
+            },
+
+            OP_9 => {
+                self.skip_if_registers_not_equal(instruction)
+            },
             
-            _ => println!("Unknown opcode: {:#06X}", instruction),
+            _ => {
+                println!("Unknown opcode: {:#06X}", instruction)
+            },
+        }
+    }
+
+    fn skip_if_registers_equal(&mut self, instruction: u16) {
+        let x_reg_idx = (instruction & 0x0F00) >> 8;
+        let y_reg_idx = (instruction & 0x00F0) >> 4;
+        let x = self.registers[x_reg_idx as usize];
+        let y = self.registers[y_reg_idx as usize];
+        if x == y {
+            self.program_counter += 2;
+        }
+    }
+
+    fn skip_if_registers_not_equal(&mut self, instruction: u16) {
+        let x_reg_idx = (instruction & 0x0F00) >> 8;
+        let y_reg_idx = (instruction & 0x00F0) >> 4;
+        let x = self.registers[x_reg_idx as usize];
+        let y = self.registers[y_reg_idx as usize];
+        if x != y {
+            self.program_counter += 2;
+        }
+    }
+
+    fn skip_if_equal(&mut self, instruction: u16) {
+        let x_reg_idx = (instruction & 0x0F00) >> 8;
+        let value = instruction & 0x00FF;
+        let x = self.registers[x_reg_idx as usize];
+        if x == value {
+            self.program_counter += 2;
+        }
+    }
+
+    fn skip_if_not_equal(&mut self, instruction: u16) {
+        let x_reg_idx = (instruction & 0x0F00) >> 8;
+        let value = instruction & 0x00FF;
+        let x = self.registers[x_reg_idx as usize];
+        if x != value {
+            self.program_counter += 2;
         }
     }
 
