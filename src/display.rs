@@ -72,13 +72,17 @@ impl Display {
         self.dirty = false;
     }
 
-    pub fn xor_sprite(&mut self, x: u16, y: u16, num_rows: u16, memory: &Memory, index_register: usize) -> u16 {
-        let xr = x & (WIDTH - 1) as u16;
-        let yr = y & (HEIGHT - 1) as u16;
+    pub fn xor_sprite(&mut self, x: u8, y: u8, num_rows: u8, memory: &Memory, index_register: usize) -> u8 {
+        let x16 = x as u16;
+        let y16 = y as u16;
+        let num_rows_16 = num_rows as u16;
+
+        let xr = x16 & (WIDTH - 1) as u16;
+        let yr = y16 & (HEIGHT - 1) as u16;
 
         let mut vf = 0;
 
-        for row_idx in 0..num_rows {
+        for row_idx in 0..num_rows_16 {
             let sprite = memory.read_u8(index_register + row_idx as usize);
             let y = yr + row_idx;
             if y >= HEIGHT as u16 {

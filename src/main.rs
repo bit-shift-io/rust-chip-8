@@ -57,6 +57,6 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
 fn main() -> Result<(), String> {
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 320);
     let mut computer = Computer::new();
-    computer.load_program_from_file(Path::new("roms/BC_test.ch8"));
+    computer.load_program_from_file(Path::new("roms/test_opcode.ch8"));
     run(&mut sdl, &mut computer)
 }

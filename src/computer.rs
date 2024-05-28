@@ -38,7 +38,7 @@ pub struct Computer {
 
     program_counter: usize,
     index_register: usize,
-    registers: [u16; 16],
+    registers: [u8; 16],
 }
 
 impl Computer {
@@ -70,50 +70,17 @@ impl Computer {
         // decode & execute
         let opcode = OP_CODE_MASK & instruction;
         match opcode {
-            0x0000 => {
-                self.clear_screen(instruction)
-            },
-
-            0xE000 => {
-                self.return_from_subroutine(instruction)
-            },
-
-            0xA000 => {
-                self.set_index_register(instruction)
-            },
-
-            0xD000 => {
-                self.op_dxyn_display(instruction)
-            },
-
-            0x1000 => {
-                self.jump(instruction)
-            },
-
-            0x2000 => {
-                self.call_subroutine(instruction)
-            },
-
-            0x3000 => {
-                self.skip_if_equal(instruction)
-            }
-
-            0x4000 => {
-                self.skip_if_not_equal(instruction)
-            }
-
-            0x5000 => {
-                self.skip_if_registers_equal(instruction)
-            },
-
-            0x6000 => {
-                self.set_register(instruction);
-            },
-
-            0x7000 => {
-                self.add_register(instruction);
-            },
-
+            0x0000 => self.op_00e0_clear_screen(instruction),
+            0xE000 => self.op_00ee_return_from_subroutine(instruction),
+            0xA000 => self.op_annn_set_index_register(instruction),
+            0xD000 => self.op_dxyn_display(instruction),
+            0x1000 => self.op_1nnn_jump(instruction),
+            0x2000 => self.op_2nnn_call_subroutine(instruction),
+            0x3000 => self.op_3xnn_skip_if_equal(instruction),
+            0x4000 => self.op_4xnn_skip_if_not_equal(instruction),
+            0x5000 => self.op_5xy0_skip_if_registers_equal(instruction),
+            0x6000 => self.op_6xnn_set_register(instruction),
+            0x7000 => self.op_7xnn_add_register(instruction),
             0x8000 => {
                 let lsb = instruction & 0x000F;
                 match lsb {
@@ -129,11 +96,7 @@ impl Computer {
                     _ => println!("Unknown 8 lsb: {:#06X}", lsb),
                 }
             },
-
-            0x9000 => {
-                self.skip_if_registers_not_equal(instruction)
-            },
-            
+            0x9000 => self.op_9xy0_skip_if_registers_not_equal(instruction),
             _ => {
                 println!("Unknown opcode: {:#06X}", instruction)
             },
@@ -176,7 +139,7 @@ impl Computer {
         println!("todo:")
     }
 
-    fn skip_if_registers_equal(&mut self, instruction: u16) {
+    fn op_5xy0_skip_if_registers_equal(&mut self, instruction: u16) {
         let x_reg_idx = (instruction & 0x0F00) >> 8;
         let y_reg_idx = (instruction & 0x00F0) >> 4;
         let x = self.registers[x_reg_idx as usize];
@@ -186,7 +149,7 @@ impl Computer {
         }
     }
 
-    fn skip_if_registers_not_equal(&mut self, instruction: u16) {
+    fn op_9xy0_skip_if_registers_not_equal(&mut self, instruction: u16) {
         let x_reg_idx = (instruction & 0x0F00) >> 8;
         let y_reg_idx = (instruction & 0x00F0) >> 4;
         let x = self.registers[x_reg_idx as usize];
@@ -196,39 +159,39 @@ impl Computer {
         }
     }
 
-    fn skip_if_equal(&mut self, instruction: u16) {
+    fn op_3xnn_skip_if_equal(&mut self, instruction: u16) {
         let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let value = instruction & 0x00FF;
+        let value = (instruction & 0x00FF) as u8;
         let x = self.registers[x_reg_idx as usize];
         if x == value {
             self.program_counter += 2;
         }
     }
 
-    fn skip_if_not_equal(&mut self, instruction: u16) {
+    fn op_4xnn_skip_if_not_equal(&mut self, instruction: u16) {
         let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let value = instruction & 0x00FF;
+        let value = (instruction & 0x00FF) as u8;
         let x = self.registers[x_reg_idx as usize];
         if x != value {
             self.program_counter += 2;
         }
     }
 
-    fn call_subroutine(&mut self, instruction: u16) {
+    fn op_2nnn_call_subroutine(&mut self, instruction: u16) {
         self.stack.push(self.program_counter);
         let address = instruction & 0x0FFF;
         self.program_counter = address as usize;
     }
 
-    fn return_from_subroutine(&mut self, _instruction: u16) {
+    fn op_00ee_return_from_subroutine(&mut self, _instruction: u16) {
         self.program_counter = self.stack.pop() as usize;
     }
 
-    fn clear_screen(&mut self, _instruction: u16) {
+    fn op_00e0_clear_screen(&mut self, _instruction: u16) {
         self.display.clear();
     }
 
-    fn set_index_register(&mut self, instruction: u16) {
+    fn op_annn_set_index_register(&mut self, instruction: u16) {
         let value = instruction & 0x0FFF;
         self.index_register = value as usize;
     }
@@ -236,7 +199,7 @@ impl Computer {
     fn op_dxyn_display(&mut self, instruction: u16) {
         let x_reg_idx = (instruction & 0x0F00) >> 8;
         let y_reg_idx = (instruction & 0x00F0) >> 4;
-        let num_rows = instruction & 0xF;
+        let num_rows = (instruction & 0xF) as u8;
         let x = self.registers[x_reg_idx as usize];
         let y = self.registers[y_reg_idx as usize];
         //let mut sprite: [u8; 16] = [0; 16];
@@ -245,21 +208,21 @@ impl Computer {
         self.registers[0xF] = vf;
     }
 
-    fn jump(&mut self, instruction: u16) {
+    fn op_1nnn_jump(&mut self, instruction: u16) {
         let address = !OP_CODE_MASK & instruction;
         self.program_counter = address as usize;
     }
 
-    fn set_register(&mut self, instruction: u16) {
+    fn op_6xnn_set_register(&mut self, instruction: u16) {
         let register = (instruction & 0x0F00) >> 8;
-        let value = instruction & 0x00FF;
+        let value = (instruction & 0x00FF) as u8;
         self.registers[register as usize] = value;
     }
 
-    fn add_register(&mut self, instruction: u16) {
+    fn op_7xnn_add_register(&mut self, instruction: u16) {
         let register = (instruction & 0x0F00) >> 8;
-        let value = instruction & 0x00FF;
-        self.registers[register as usize] += value;
+        let value = (instruction & 0x00FF) as u8;
+        self.registers[register as usize] = self.registers[register as usize].wrapping_add(value);
     }
 
     pub fn draw(&mut self, sdl: &mut SdlSystem) {
