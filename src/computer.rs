@@ -30,18 +30,6 @@ const FONT_MEMORY_START: usize = 0x50;
 const ROM_START: usize = 0x200;
 
 const OP_CODE_MASK: u16 = 0xF000;
-const OP_A : u16 = 0xA000;
-const OP_E : u16 = 0xE000;
-const OP_D : u16 = 0xD000;
-const OP_0 : u16 = 0x0000;
-const OP_1 : u16 = 0x1000;
-const OP_2 : u16 = 0x2000;
-const OP_3 : u16 = 0x3000;
-const OP_4 : u16 = 0x4000;
-const OP_5 : u16 = 0x5000;
-const OP_6 : u16 = 0x6000;
-const OP_7 : u16 = 0x7000;
-const OP_9 : u16 = 0x9000;
 
 pub struct Computer {
     memory: Memory,
@@ -82,51 +70,67 @@ impl Computer {
         // decode & execute
         let opcode = OP_CODE_MASK & instruction;
         match opcode {
-            OP_0 => {
+            0x0000 => {
                 self.clear_screen(instruction)
             },
 
-            OP_E => {
+            0xE000 => {
                 self.return_from_subroutine(instruction)
             },
 
-            OP_A => {
+            0xA000 => {
                 self.set_index_register(instruction)
             },
 
-            OP_D => {
-                self.display(instruction)
+            0xD000 => {
+                self.op_dxyn_display(instruction)
             },
 
-            OP_1 => {
+            0x1000 => {
                 self.jump(instruction)
             },
 
-            OP_2 => {
+            0x2000 => {
                 self.call_subroutine(instruction)
             },
 
-            OP_3 => {
+            0x3000 => {
                 self.skip_if_equal(instruction)
             }
 
-            OP_4 => {
+            0x4000 => {
                 self.skip_if_not_equal(instruction)
             }
 
-            OP_5 => {
+            0x5000 => {
                 self.skip_if_registers_equal(instruction)
             },
 
-            OP_6 => {
+            0x6000 => {
                 self.set_register(instruction);
             },
 
-            OP_7 => {
+            0x7000 => {
                 self.add_register(instruction);
             },
 
-            OP_9 => {
+            0x8000 => {
+                let lsb = instruction & 0x000F;
+                match lsb {
+                    0x0 => self.op_8xy0_set(instruction),
+                    0x1 => self.op_8xy1_binary_or(instruction),
+                    0x2 => self.op_8xy2_binary_and(instruction),
+                    0x3 => self.op_8xy3_binary_xor(instruction),
+                    0x4 => self.op_8xy4_add(instruction),
+                    0x5 => self.op_8xy5_subtract(instruction),
+                    0x6 => self.op_8xy6_shift(instruction),
+                    0x7 => self.op_8xy7_subtract(instruction),
+                    0xE => self.op_8xyE_shift(instruction),
+                    _ => println!("Unknown 8 lsb: {:#06X}", lsb),
+                }
+            },
+
+            0x9000 => {
                 self.skip_if_registers_not_equal(instruction)
             },
             
@@ -134,6 +138,42 @@ impl Computer {
                 println!("Unknown opcode: {:#06X}", instruction)
             },
         }
+    }
+
+    fn op_8xy0_set(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy1_binary_or(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy2_binary_and(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy3_binary_xor(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy4_add(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy5_subtract(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy7_subtract(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xy6_shift(&mut self, instruction: u16) {
+        println!("todo:")
+    }
+
+    fn op_8xyE_shift(&mut self, instruction: u16) {
+        println!("todo:")
     }
 
     fn skip_if_registers_equal(&mut self, instruction: u16) {
@@ -193,7 +233,7 @@ impl Computer {
         self.index_register = value as usize;
     }
 
-    fn display(&mut self, instruction: u16) {
+    fn op_dxyn_display(&mut self, instruction: u16) {
         let x_reg_idx = (instruction & 0x0F00) >> 8;
         let y_reg_idx = (instruction & 0x00F0) >> 4;
         let num_rows = instruction & 0xF;
