@@ -97,46 +97,98 @@ impl Computer {
                 }
             },
             0x9000 => self.op_9xy0_skip_if_registers_not_equal(instruction),
+            0xF000 => {
+                let lsb = instruction & 0x00FF;
+                match lsb {
+                    0x07 => self.op_fx07_timer(instruction),
+                    0x15 => self.op_fx15_timer(instruction),
+                    0x18 => self.op_fx18_timer(instruction),
+                    0x1E => self.op_fx1e_index_register_add(instruction),
+                    0x0A => self.op_fx0a_get_keyboard_input(instruction),
+                    0x29 => self.op_fx29_font_character(instruction),
+                    0x33 => self.op_fx29_binary_coded_decimal_conversion(instruction),
+                    0x55 => self.op_fx55_store_memory(instruction),
+                    0x65 => self.op_fx65_load_memory(instruction),
+                    _ => println!("Unknown F lsb: {:#06X}", lsb),
+                }
+            },
             _ => {
                 println!("Unknown opcode: {:#06X}", instruction)
             },
         }
     }
 
+    fn op_fx65_load_memory(&mut self, instruction: u16) {
+        println!("todo: op_fx65_load_memory")
+    }
+
+    fn op_fx55_store_memory(&mut self, instruction: u16) {
+        println!("todo: op_fx55_store_memory")
+    }
+
+    fn op_fx29_binary_coded_decimal_conversion(&mut self, instruction: u16) {
+        println!("todo: op_fx29_binary_coded_decimal_conversion")
+    }
+
+    fn op_fx29_font_character(&mut self, instruction: u16) {
+        println!("todo: op_fx29_font_character")
+    }
+
+    fn op_fx0a_get_keyboard_input(&mut self, instruction: u16) {
+        println!("todo: op_fx0a_get_keyboard_input")
+    }
+
+    fn op_fx1e_index_register_add(&mut self, instruction: u16) {
+        println!("todo: op_fx1e_index_register_add")
+    }
+
+    fn op_fx07_timer(&mut self, instruction: u16) {
+        println!("todo: op_fx07_timer")
+    }
+
+    fn op_fx15_timer(&mut self, instruction: u16) {
+        println!("todo: op_fx15_timer")
+    }
+
+
+    fn op_fx18_timer(&mut self, instruction: u16) {
+        println!("todo: op_fx18_timer")
+    }
+
     fn op_8xy0_set(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy0_set")
     }
 
     fn op_8xy1_binary_or(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy1_binary_or")
     }
 
     fn op_8xy2_binary_and(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy2_binary_and")
     }
 
     fn op_8xy3_binary_xor(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy3_binary_xor")
     }
 
     fn op_8xy4_add(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy4_add")
     }
 
     fn op_8xy5_subtract(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy5_subtract")
     }
 
     fn op_8xy7_subtract(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy7_subtract")
     }
 
     fn op_8xy6_shift(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xy6_shift")
     }
 
     fn op_8xyE_shift(&mut self, instruction: u16) {
-        println!("todo:")
+        println!("todo: op_8xyE_shift")
     }
 
     fn op_5xy0_skip_if_registers_equal(&mut self, instruction: u16) {
