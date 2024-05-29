@@ -1,6 +1,7 @@
 
 use crate::memory::Memory;
 use crate::display::Display;
+use crate::instruction::Instruction;
 use crate::sdl_system::SdlSystem;
 use crate::stack::Stack;
 
@@ -64,25 +65,25 @@ impl Computer {
 
     pub fn update(&mut self) {
         // fetch instruction
-        let instruction = self.memory.read_u16(self.program_counter);
+        let instruction = Instruction::new(self.memory.read_u16(self.program_counter));
         self.program_counter += 2;
 
         // decode & execute
-        let opcode = OP_CODE_MASK & instruction;
+        let opcode = instruction.op_code();
         match opcode {
-            0x0000 => self.op_00e0_clear_screen(instruction),
-            0xE000 => self.op_00ee_return_from_subroutine(instruction),
-            0xA000 => self.op_annn_set_index_register(instruction),
-            0xD000 => self.op_dxyn_display(instruction),
-            0x1000 => self.op_1nnn_jump(instruction),
-            0x2000 => self.op_2nnn_call_subroutine(instruction),
-            0x3000 => self.op_3xnn_skip_if_equal(instruction),
-            0x4000 => self.op_4xnn_skip_if_not_equal(instruction),
-            0x5000 => self.op_5xy0_skip_if_registers_equal(instruction),
-            0x6000 => self.op_6xnn_set_register(instruction),
-            0x7000 => self.op_7xnn_add_register(instruction),
-            0x8000 => {
-                let lsb = instruction & 0x000F;
+            0x0 => self.op_00e0_clear_screen(instruction),
+            0xE => self.op_00ee_return_from_subroutine(instruction),
+            0xA => self.op_annn_set_index_register(instruction),
+            0xD => self.op_dxyn_display(instruction),
+            0x1 => self.op_1nnn_jump(instruction),
+            0x2 => self.op_2nnn_call_subroutine(instruction),
+            0x3 => self.op_3xnn_skip_if_equal(instruction),
+            0x4 => self.op_4xnn_skip_if_not_equal(instruction),
+            0x5 => self.op_5xy0_skip_if_registers_equal(instruction),
+            0x6 => self.op_6xnn_set_register(instruction),
+            0x7 => self.op_7xnn_add_register(instruction),
+            0x8 => {
+                let lsb = instruction.n(); //instruction & 0x000F;
                 match lsb {
                     0x0 => self.op_8xy0_set(instruction),
                     0x1 => self.op_8xy1_binary_or(instruction),
@@ -92,13 +93,13 @@ impl Computer {
                     0x5 => self.op_8xy5_subtract(instruction),
                     0x6 => self.op_8xy6_shift(instruction),
                     0x7 => self.op_8xy7_subtract(instruction),
-                    0xE => self.op_8xyE_shift(instruction),
+                    0xE => self.op_8xye_shift(instruction),
                     _ => println!("Unknown 8 lsb: {:#06X}", lsb),
                 }
             },
-            0x9000 => self.op_9xy0_skip_if_registers_not_equal(instruction),
-            0xF000 => {
-                let lsb = instruction & 0x00FF;
+            0x9 => self.op_9xy0_skip_if_registers_not_equal(instruction),
+            0xF => {
+                let lsb = instruction.nn(); //instruction & 0x00FF;
                 match lsb {
                     0x07 => self.op_fx07_timer(instruction),
                     0x15 => self.op_fx15_timer(instruction),
@@ -113,167 +114,198 @@ impl Computer {
                 }
             },
             _ => {
-                println!("Unknown opcode: {:#06X}", instruction)
+                println!("Unknown opcode: {:#06X}", instruction.instruction)
             },
         }
     }
 
-    fn op_fx65_load_memory(&mut self, instruction: u16) {
+    fn op_fx65_load_memory(&mut self, instruction: Instruction) {
         println!("todo: op_fx65_load_memory")
     }
 
-    fn op_fx55_store_memory(&mut self, instruction: u16) {
+    fn op_fx55_store_memory(&mut self, instruction: Instruction) {
         println!("todo: op_fx55_store_memory")
     }
 
-    fn op_fx29_binary_coded_decimal_conversion(&mut self, instruction: u16) {
+    fn op_fx29_binary_coded_decimal_conversion(&mut self, instruction: Instruction) {
         println!("todo: op_fx29_binary_coded_decimal_conversion")
     }
 
-    fn op_fx29_font_character(&mut self, instruction: u16) {
-        println!("todo: op_fx29_font_character")
+    fn op_fx29_font_character(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let x = self.registers[xi];
+        self.index_register = FONT_MEMORY_START + (5 * x as usize);
     }
 
-    fn op_fx0a_get_keyboard_input(&mut self, instruction: u16) {
+    fn op_fx0a_get_keyboard_input(&mut self, instruction: Instruction) {
         println!("todo: op_fx0a_get_keyboard_input")
     }
 
-    fn op_fx1e_index_register_add(&mut self, instruction: u16) {
+    fn op_fx1e_index_register_add(&mut self, instruction: Instruction) {
         println!("todo: op_fx1e_index_register_add")
     }
 
-    fn op_fx07_timer(&mut self, instruction: u16) {
+    fn op_fx07_timer(&mut self, instruction: Instruction) {
         println!("todo: op_fx07_timer")
     }
 
-    fn op_fx15_timer(&mut self, instruction: u16) {
+    fn op_fx15_timer(&mut self, instruction: Instruction) {
         println!("todo: op_fx15_timer")
     }
 
 
-    fn op_fx18_timer(&mut self, instruction: u16) {
+    fn op_fx18_timer(&mut self, instruction: Instruction) {
         println!("todo: op_fx18_timer")
     }
 
-    fn op_8xy0_set(&mut self, instruction: u16) {
+    fn op_8xy0_set(&mut self, instruction: Instruction) {
         println!("todo: op_8xy0_set")
     }
 
-    fn op_8xy1_binary_or(&mut self, instruction: u16) {
-        println!("todo: op_8xy1_binary_or")
+    fn op_8xy1_binary_or(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        self.registers[xi] |= self.registers[yi];
     }
 
-    fn op_8xy2_binary_and(&mut self, instruction: u16) {
-        println!("todo: op_8xy2_binary_and")
+    fn op_8xy2_binary_and(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        self.registers[xi] &= self.registers[yi];
     }
 
-    fn op_8xy3_binary_xor(&mut self, instruction: u16) {
-        println!("todo: op_8xy3_binary_xor")
+    fn op_8xy3_binary_xor(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        self.registers[xi] ^= self.registers[yi];
     }
 
-    fn op_8xy4_add(&mut self, instruction: u16) {
-        println!("todo: op_8xy4_add")
+    fn op_8xy4_add(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        self.registers[xi] &= self.registers[yi];
     }
 
-    fn op_8xy5_subtract(&mut self, instruction: u16) {
-        println!("todo: op_8xy5_subtract")
+    fn op_8xy5_subtract(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        let x = self.registers[xi];
+        let y = self.registers[yi];
+        
+        if x > y {
+            self.registers[0xF] = 1;
+        } else {
+            self.registers[0xF] = 0;
+        }
+
+        self.registers[xi] = x.wrapping_sub(y);
     }
 
-    fn op_8xy7_subtract(&mut self, instruction: u16) {
-        println!("todo: op_8xy7_subtract")
+    fn op_8xy7_subtract(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        let x = self.registers[xi];
+        let y = self.registers[yi];
+
+        if y > x {
+            self.registers[0xF] = 1;
+        } else {
+            self.registers[0xF] = 0;
+        }
+
+        self.registers[xi] = y.wrapping_sub(x);
     }
 
-    fn op_8xy6_shift(&mut self, instruction: u16) {
-        println!("todo: op_8xy6_shift")
+    fn op_8xy6_shift(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+
+        // Save LSB in VF
+	    self.registers[0xF] = self.registers[xi] & 0x1;
+
+        self.registers[xi] >>= 1;
     }
 
-    fn op_8xyE_shift(&mut self, instruction: u16) {
-        println!("todo: op_8xyE_shift")
+    fn op_8xye_shift(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+
+        // Save MSB in VF
+	    self.registers[0xF] = (self.registers[xi] & 0x80) >> 7;
+
+        self.registers[xi] <<= 1;
     }
 
-    fn op_5xy0_skip_if_registers_equal(&mut self, instruction: u16) {
-        let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let y_reg_idx = (instruction & 0x00F0) >> 4;
-        let x = self.registers[x_reg_idx as usize];
-        let y = self.registers[y_reg_idx as usize];
+    fn op_5xy0_skip_if_registers_equal(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        let x = self.registers[xi];
+        let y = self.registers[yi];
         if x == y {
             self.program_counter += 2;
         }
     }
 
-    fn op_9xy0_skip_if_registers_not_equal(&mut self, instruction: u16) {
-        let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let y_reg_idx = (instruction & 0x00F0) >> 4;
-        let x = self.registers[x_reg_idx as usize];
-        let y = self.registers[y_reg_idx as usize];
+    fn op_9xy0_skip_if_registers_not_equal(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        let x = self.registers[xi];
+        let y = self.registers[yi];
         if x != y {
             self.program_counter += 2;
         }
     }
 
-    fn op_3xnn_skip_if_equal(&mut self, instruction: u16) {
-        let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let value = (instruction & 0x00FF) as u8;
-        let x = self.registers[x_reg_idx as usize];
+    fn op_3xnn_skip_if_equal(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let value = instruction.nn();
+        let x = self.registers[xi];
         if x == value {
             self.program_counter += 2;
         }
     }
 
-    fn op_4xnn_skip_if_not_equal(&mut self, instruction: u16) {
-        let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let value = (instruction & 0x00FF) as u8;
-        let x = self.registers[x_reg_idx as usize];
+    fn op_4xnn_skip_if_not_equal(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let value = instruction.nn();
+        let x = self.registers[xi];
         if x != value {
             self.program_counter += 2;
         }
     }
 
-    fn op_2nnn_call_subroutine(&mut self, instruction: u16) {
+    fn op_2nnn_call_subroutine(&mut self, instruction: Instruction) {
         self.stack.push(self.program_counter);
-        let address = instruction & 0x0FFF;
+        let address = instruction.nnn();
         self.program_counter = address as usize;
     }
 
-    fn op_00ee_return_from_subroutine(&mut self, _instruction: u16) {
+    fn op_00ee_return_from_subroutine(&mut self, _instruction: Instruction) {
         self.program_counter = self.stack.pop() as usize;
     }
 
-    fn op_00e0_clear_screen(&mut self, _instruction: u16) {
+    fn op_00e0_clear_screen(&mut self, _instruction: Instruction) {
         self.display.clear();
     }
 
-    fn op_annn_set_index_register(&mut self, instruction: u16) {
-        let value = instruction & 0x0FFF;
+    fn op_annn_set_index_register(&mut self, instruction: Instruction) {
+        let value = instruction.nnn();
         self.index_register = value as usize;
     }
 
-    fn op_dxyn_display(&mut self, instruction: u16) {
-        let x_reg_idx = (instruction & 0x0F00) >> 8;
-        let y_reg_idx = (instruction & 0x00F0) >> 4;
-        let num_rows = (instruction & 0xF) as u8;
-        let x = self.registers[x_reg_idx as usize];
-        let y = self.registers[y_reg_idx as usize];
-        //let mut sprite: [u8; 16] = [0; 16];
-        //self.memory.read_u8_array(self.index_register, &sprite);
+    fn op_dxyn_display(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        let num_rows = instruction.n();
+        let x = self.registers[xi];
+        let y = self.registers[yi];
         let vf = self.display.xor_sprite(x, y, num_rows, &self.memory, self.index_register);
         self.registers[0xF] = vf;
     }
 
-    fn op_1nnn_jump(&mut self, instruction: u16) {
-        let address = !OP_CODE_MASK & instruction;
+    fn op_1nnn_jump(&mut self, instruction: Instruction) {
+        let address = instruction.nnn();
         self.program_counter = address as usize;
     }
 
-    fn op_6xnn_set_register(&mut self, instruction: u16) {
-        let register = (instruction & 0x0F00) >> 8;
-        let value = (instruction & 0x00FF) as u8;
+    fn op_6xnn_set_register(&mut self, instruction: Instruction) {
+        let register = instruction.x();
+        let value = instruction.nn();
         self.registers[register as usize] = value;
     }
 
-    fn op_7xnn_add_register(&mut self, instruction: u16) {
-        let register = (instruction & 0x0F00) >> 8;
-        let value = (instruction & 0x00FF) as u8;
+    fn op_7xnn_add_register(&mut self, instruction: Instruction) {
+        let register = instruction.x();
+        let value = instruction.nn();
         self.registers[register as usize] = self.registers[register as usize].wrapping_add(value);
     }
 

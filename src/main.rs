@@ -3,6 +3,7 @@ mod computer;
 mod memory;
 mod display;
 mod stack;
+mod instruction;
 
 use std::{path::Path, time::Duration};
 
