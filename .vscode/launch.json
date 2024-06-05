@@ -19,7 +19,9 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "roms/chip8-roms/games/Space Flight.ch8"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {

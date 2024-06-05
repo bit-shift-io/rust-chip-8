@@ -8,6 +8,7 @@ mod keyboard;
 mod timer;
 
 use std::{path::Path, time::Duration};
+use clap::Parser;
 
 use computer::Computer;
 use keyboard::Keyboard;
@@ -15,7 +16,13 @@ use sdl2::{event::Event, keyboard::Keycode};
 
 use crate::sdl_system::SdlSystem;
 
-
+/// Chip-8 Emulator written in rust
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// The path to the ROM file to read
+    path: std::path::PathBuf,
+}
 
 pub struct Context<'a> {
     pub sdl: &'a mut SdlSystem,
@@ -64,9 +71,11 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
 }
 
 fn main() -> Result<(), String> {
+    let args = Args::parse();
+
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 320);
     let mut computer = Computer::new();
     //computer.load_program_from_file(Path::new("roms/BC_test.ch8"));
-    computer.load_program_from_file(Path::new("roms/chip8-roms/games/Space Flight.ch8"));
+    computer.load_program_from_file(Path::new(&args.path));//Path::new("roms/chip8-roms/games/Space Flight.ch8"));
     run(&mut sdl, &mut computer)
 }
