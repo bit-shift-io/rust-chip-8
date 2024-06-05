@@ -5,6 +5,7 @@ mod display;
 mod stack;
 mod instruction;
 mod keyboard;
+mod timer;
 
 use std::{path::Path, time::Duration};
 
@@ -47,11 +48,12 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
 
         {
             //let mut context = Context{ sdl };
+            let dt = 0.0167f32;
             keyboard.update();
             //let current_scene = &mut self.scenes[self.current_scene_idx];
             //current_scene.update(&mut context);
             //current_scene.draw(&mut context);
-            computer.update(&mut keyboard);
+            computer.update(dt, &mut keyboard);
             computer.draw(sdl);
         }
 
@@ -65,6 +67,6 @@ fn main() -> Result<(), String> {
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 320);
     let mut computer = Computer::new();
     //computer.load_program_from_file(Path::new("roms/BC_test.ch8"));
-    computer.load_program_from_file(Path::new("roms/chip8-roms/games/Tron.ch8"));
+    computer.load_program_from_file(Path::new("roms/chip8-roms/games/Space Flight.ch8"));
     run(&mut sdl, &mut computer)
 }

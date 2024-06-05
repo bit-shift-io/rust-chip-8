@@ -7,6 +7,7 @@ use crate::display::Display;
 use crate::instruction::Instruction;
 use crate::sdl_system::SdlSystem;
 use crate::stack::Stack;
+use crate::timer::Timer;
 
 use std::fs;
 use std::path::Path;
@@ -31,22 +32,22 @@ const FONT: [u8; 80] = [
 ];
 
 const KEY_MAP: [sdl2::keyboard::Keycode; 16] = [
-    sdl2::keyboard::Keycode::Num1, // Key 0
-    sdl2::keyboard::Keycode::Num2, // Key 1
-    sdl2::keyboard::Keycode::Num3, // Key 2
-    sdl2::keyboard::Keycode::Num4,
-    sdl2::keyboard::Keycode::Q,
-    sdl2::keyboard::Keycode::W,
-    sdl2::keyboard::Keycode::E,
-    sdl2::keyboard::Keycode::R,
-    sdl2::keyboard::Keycode::A,
-    sdl2::keyboard::Keycode::S,
-    sdl2::keyboard::Keycode::D,
-    sdl2::keyboard::Keycode::F,
-    sdl2::keyboard::Keycode::Z,
-    sdl2::keyboard::Keycode::X,
-    sdl2::keyboard::Keycode::C,
-    sdl2::keyboard::Keycode::V,
+    sdl2::keyboard::Keycode::X, // 0
+    sdl2::keyboard::Keycode::Num1, // 1
+    sdl2::keyboard::Keycode::Num2, // 2
+    sdl2::keyboard::Keycode::Num3,  // 3
+    sdl2::keyboard::Keycode::Q, // 4
+    sdl2::keyboard::Keycode::W, // 5
+    sdl2::keyboard::Keycode::E, // 6
+    sdl2::keyboard::Keycode::A, // 7
+    sdl2::keyboard::Keycode::S, // 8
+    sdl2::keyboard::Keycode::D, // 9
+    sdl2::keyboard::Keycode::Z, // A
+    sdl2::keyboard::Keycode::C, // B
+    sdl2::keyboard::Keycode::Num4, // C
+    sdl2::keyboard::Keycode::R, // D
+    sdl2::keyboard::Keycode::F, // E
+    sdl2::keyboard::Keycode::V, // F
 ];
 
 const FONT_MEMORY_START: usize = 0x50;
@@ -56,6 +57,9 @@ pub struct Computer {
     memory: Memory,
     display: Display,
     stack: Stack,
+
+    delay_timer: Timer,
+    sound_timer: Timer,
 
     program_counter: usize,
     index_register: usize,
@@ -71,6 +75,8 @@ impl Computer {
             memory,
             display: Display::new(),
             stack: Stack::new(),
+            delay_timer: Timer::new(),
+            sound_timer: Timer::new(),
             program_counter: 0,
             index_register: 0,
             registers: [0; 16],
@@ -83,7 +89,10 @@ impl Computer {
         self.program_counter = ROM_START;
     }
 
-    pub fn update(&mut self, keyboard: &mut Keyboard) {
+    pub fn update(&mut self, dt: f32, keyboard: &mut Keyboard) {
+        self.delay_timer.update(dt);
+        self.sound_timer.update(dt);
+
         // fetch instruction
         let instruction = Instruction::new(self.memory.read_u16(self.program_counter));
         self.program_counter += 2;
@@ -208,21 +217,27 @@ impl Computer {
         println!("todo: op_fx1e_index_register_add")
     }
 
-    fn op_fx07_timer(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx07_timer")
+    fn op_fx07_timer(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let count = self.delay_timer.count();
+        self.registers[xi] = count;
     }
 
-    fn op_fx15_timer(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx15_timer")
+    fn op_fx15_timer(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let x = self.registers[xi];
+        self.delay_timer.set_count(x);
     }
 
-
-    fn op_fx18_timer(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx18_timer")
+    fn op_fx18_timer(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let x = self.registers[xi];
+        self.sound_timer.set_count(x);
     }
 
-    fn op_8xy0_set(&mut self, _instruction: Instruction) {
-        println!("todo: op_8xy0_set")
+    fn op_8xy0_set(&mut self, instruction: Instruction) {
+        let [xi, yi] = instruction.xy();
+        self.registers[xi] = self.registers[yi];
     }
 
     fn op_8xy1_binary_or(&mut self, instruction: Instruction) {
