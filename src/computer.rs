@@ -165,6 +165,7 @@ impl Computer {
         let xi = instruction.x();
         let x = self.registers[xi];
         let keycode = KEY_MAP[x as usize];
+        println!("Key down: {:?}", keycode);
         let is_down = keyboard.get_keystate(keycode).is_down();
         if is_down {
             self.program_counter += 2;
@@ -175,6 +176,7 @@ impl Computer {
         let xi = instruction.x();
         let x = self.registers[xi];
         let keycode = KEY_MAP[x as usize];
+        println!("Key not down: {:?}", keycode);
         let is_down = keyboard.get_keystate(keycode).is_down();
         if !is_down {
             self.program_counter += 2;
