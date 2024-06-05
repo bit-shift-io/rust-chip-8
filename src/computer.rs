@@ -223,7 +223,6 @@ impl Computer {
 
         let hundreds_place = value % 10;
         self.memory.write_u8(self.index_register + 0, hundreds_place);
-        value /= 10;
     }
 
     fn op_fx29_font_character(&mut self, instruction: Instruction) {
