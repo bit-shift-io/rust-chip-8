@@ -20,7 +20,7 @@
                 }
             },
             "args": [
-                "roms/chip8-roms/games/Space Flight.ch8"
+                "roms/test_opcode.ch8"
             ],
             "cwd": "${workspaceFolder}"
         },

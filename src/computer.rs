@@ -151,7 +151,7 @@ impl Computer {
                     0x1E => self.op_fx1e_index_register_add(instruction),
                     0x0A => self.op_fx0a_get_keyboard_input(instruction),
                     0x29 => self.op_fx29_font_character(instruction),
-                    0x33 => self.op_fx29_binary_coded_decimal_conversion(instruction),
+                    0x33 => self.op_fx33_binary_coded_decimal_conversion(instruction),
                     0x55 => self.op_fx55_store_memory(instruction),
                     0x65 => self.op_fx65_load_memory(instruction),
                     _ => println!("Unknown F lsb: {:#06X}", lsb),
@@ -195,7 +195,7 @@ impl Computer {
 
     fn op_fx65_load_memory(&mut self, instruction: Instruction) {
         let x: usize = instruction.x();
-        for i in 0..x {
+        for i in 0..=x {
             let value = self.memory.read_u8(self.index_register + i);
             self.registers[i] = value;
         }
@@ -203,14 +203,27 @@ impl Computer {
 
     fn op_fx55_store_memory(&mut self, instruction: Instruction) {
         let x: usize = instruction.x();
-        for i in 0..x {
+        for i in 0..=x {
             let value = self.registers[i];
             self.memory.write_u8(self.index_register + i, value);
         }
     }
 
-    fn op_fx29_binary_coded_decimal_conversion(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx29_binary_coded_decimal_conversion")
+    fn op_fx33_binary_coded_decimal_conversion(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let mut value = self.registers[xi];
+
+        let ones_place = value % 10;
+        self.memory.write_u8(self.index_register + 2, ones_place);
+        value /= 10;
+        
+        let tens_place = value % 10;
+        self.memory.write_u8(self.index_register + 1, tens_place);
+        value /= 10;
+
+        let hundreds_place = value % 10;
+        self.memory.write_u8(self.index_register + 0, hundreds_place);
+        value /= 10;
     }
 
     fn op_fx29_font_character(&mut self, instruction: Instruction) {
@@ -269,7 +282,15 @@ impl Computer {
 
     fn op_8xy4_add(&mut self, instruction: Instruction) {
         let [xi, yi] = instruction.xy();
-        self.registers[xi] &= self.registers[yi];
+        let sum = self.registers[xi] as usize + self.registers[yi] as usize;
+        
+        if sum > 255 {
+            self.registers[0xF] = 1;
+        } else {
+            self.registers[0xF] = 0;
+        }
+
+        self.registers[xi] = (sum & 0xFF) as u8;
     }
 
     fn op_8xy5_subtract(&mut self, instruction: Instruction) {
