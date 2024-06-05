@@ -75,7 +75,6 @@ fn main() -> Result<(), String> {
 
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 320);
     let mut computer = Computer::new();
-    //computer.load_program_from_file(Path::new("roms/BC_test.ch8"));
-    computer.load_program_from_file(Path::new(&args.path));//Path::new("roms/chip8-roms/games/Space Flight.ch8"));
+    computer.load_program_from_file(Path::new(&args.path));
     run(&mut sdl, &mut computer)
 }
