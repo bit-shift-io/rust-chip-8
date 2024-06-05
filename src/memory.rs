@@ -33,4 +33,8 @@ impl Memory {
         self.read_u8_array(address, &mut bytes);
         u16::from_be_bytes(bytes)
     }
+
+    pub fn write_u8(&mut self, address: usize, value: u8) {
+        self.memory[address] = value;
+    }
 }

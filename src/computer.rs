@@ -193,12 +193,20 @@ impl Computer {
         self.registers[xi] = result;
     }
 
-    fn op_fx65_load_memory(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx65_load_memory")
+    fn op_fx65_load_memory(&mut self, instruction: Instruction) {
+        let x: usize = instruction.x();
+        for i in 0..x {
+            let value = self.memory.read_u8(self.index_register + i);
+            self.registers[i] = value;
+        }
     }
 
-    fn op_fx55_store_memory(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx55_store_memory")
+    fn op_fx55_store_memory(&mut self, instruction: Instruction) {
+        let x: usize = instruction.x();
+        for i in 0..x {
+            let value = self.registers[i];
+            self.memory.write_u8(self.index_register + i, value);
+        }
     }
 
     fn op_fx29_binary_coded_decimal_conversion(&mut self, _instruction: Instruction) {
@@ -215,8 +223,10 @@ impl Computer {
         println!("todo: op_fx0a_get_keyboard_input")
     }
 
-    fn op_fx1e_index_register_add(&mut self, _instruction: Instruction) {
-        println!("todo: op_fx1e_index_register_add")
+    fn op_fx1e_index_register_add(&mut self, instruction: Instruction) {
+        let xi = instruction.x();
+        let x = self.registers[xi] as usize;
+        self.index_register += x;
     }
 
     fn op_fx07_timer(&mut self, instruction: Instruction) {
