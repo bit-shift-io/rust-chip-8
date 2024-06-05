@@ -4,10 +4,12 @@ mod memory;
 mod display;
 mod stack;
 mod instruction;
+mod keyboard;
 
 use std::{path::Path, time::Duration};
 
 use computer::Computer;
+use keyboard::Keyboard;
 use sdl2::{event::Event, keyboard::Keycode};
 
 use crate::sdl_system::SdlSystem;
@@ -20,6 +22,7 @@ pub struct Context<'a> {
 
 pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
     let mut event_pump = sdl.sdl_context.event_pump()?;
+    let mut keyboard = Keyboard::new();
 
     'running: loop {
         {
@@ -37,15 +40,18 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
 
                 //let current_scene = &mut self.scenes[self.current_scene_idx];
                 //current_scene.process_event(&mut context, event);
+
+                keyboard.process_event(event);
             }
         }
 
         {
-            let mut context = Context{ sdl };
+            //let mut context = Context{ sdl };
+            keyboard.update();
             //let current_scene = &mut self.scenes[self.current_scene_idx];
             //current_scene.update(&mut context);
             //current_scene.draw(&mut context);
-            computer.update();
+            computer.update(&mut keyboard);
             computer.draw(sdl);
         }
 
@@ -58,6 +64,7 @@ pub fn run(sdl: &mut SdlSystem, computer: &mut Computer) -> Result<(), String> {
 fn main() -> Result<(), String> {
     let mut sdl = SdlSystem::new("Rust Chip-8", 640, 320);
     let mut computer = Computer::new();
-    computer.load_program_from_file(Path::new("roms/BC_test.ch8"));
+    //computer.load_program_from_file(Path::new("roms/BC_test.ch8"));
+    computer.load_program_from_file(Path::new("roms/chip8-roms/games/Tron.ch8"));
     run(&mut sdl, &mut computer)
 }

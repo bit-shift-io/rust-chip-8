@@ -1,4 +1,7 @@
 
+use rand::Rng;
+
+use crate::keyboard::Keyboard;
 use crate::memory::Memory;
 use crate::display::Display;
 use crate::instruction::Instruction;
@@ -27,10 +30,27 @@ const FONT: [u8; 80] = [
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 ];
 
+const KEY_MAP: [sdl2::keyboard::Keycode; 16] = [
+    sdl2::keyboard::Keycode::Num1, // Key 0
+    sdl2::keyboard::Keycode::Num2, // Key 1
+    sdl2::keyboard::Keycode::Num3, // Key 2
+    sdl2::keyboard::Keycode::Num4,
+    sdl2::keyboard::Keycode::Q,
+    sdl2::keyboard::Keycode::W,
+    sdl2::keyboard::Keycode::E,
+    sdl2::keyboard::Keycode::R,
+    sdl2::keyboard::Keycode::A,
+    sdl2::keyboard::Keycode::S,
+    sdl2::keyboard::Keycode::D,
+    sdl2::keyboard::Keycode::F,
+    sdl2::keyboard::Keycode::Z,
+    sdl2::keyboard::Keycode::X,
+    sdl2::keyboard::Keycode::C,
+    sdl2::keyboard::Keycode::V,
+];
+
 const FONT_MEMORY_START: usize = 0x50;
 const ROM_START: usize = 0x200;
-
-const OP_CODE_MASK: u16 = 0xF000;
 
 pub struct Computer {
     memory: Memory,
@@ -63,7 +83,7 @@ impl Computer {
         self.program_counter = ROM_START;
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, keyboard: &mut Keyboard) {
         // fetch instruction
         let instruction = Instruction::new(self.memory.read_u16(self.program_counter));
         self.program_counter += 2;
@@ -71,10 +91,14 @@ impl Computer {
         // decode & execute
         let opcode = instruction.op_code();
         match opcode {
-            0x0 => self.op_00e0_clear_screen(instruction),
-            0xE => self.op_00ee_return_from_subroutine(instruction),
-            0xA => self.op_annn_set_index_register(instruction),
-            0xD => self.op_dxyn_display(instruction),
+            0x0 => {
+                let lsb = instruction.n();
+                match lsb {
+                    0x0 => self.op_00e0_clear_screen(instruction),
+                    0xE => self.op_00ee_return_from_subroutine(instruction),
+                    _ => println!("Unknown 0 lsb: {:#06X}", lsb),
+                }
+            }
             0x1 => self.op_1nnn_jump(instruction),
             0x2 => self.op_2nnn_call_subroutine(instruction),
             0x3 => self.op_3xnn_skip_if_equal(instruction),
@@ -83,7 +107,7 @@ impl Computer {
             0x6 => self.op_6xnn_set_register(instruction),
             0x7 => self.op_7xnn_add_register(instruction),
             0x8 => {
-                let lsb = instruction.n(); //instruction & 0x000F;
+                let lsb = instruction.n();
                 match lsb {
                     0x0 => self.op_8xy0_set(instruction),
                     0x1 => self.op_8xy1_binary_or(instruction),
@@ -98,8 +122,19 @@ impl Computer {
                 }
             },
             0x9 => self.op_9xy0_skip_if_registers_not_equal(instruction),
+            0xA => self.op_annn_set_index_register(instruction),
+            0xC => self.op_cxnn_random(instruction),
+            0xD => self.op_dxyn_display(instruction),
+            0xE => {
+                let lsb = instruction.n();
+                match lsb {
+                    0xE => self.op_ex9e_skip_if_key_down(instruction, keyboard),
+                    0x1 => self.op_exa1_skip_if_key_not_down(instruction, keyboard),
+                    _ => println!("Unknown E lsb: {:#06X}", lsb),
+                }
+            }
             0xF => {
-                let lsb = instruction.nn(); //instruction & 0x00FF;
+                let lsb = instruction.nn();
                 match lsb {
                     0x07 => self.op_fx07_timer(instruction),
                     0x15 => self.op_fx15_timer(instruction),
@@ -113,21 +148,49 @@ impl Computer {
                     _ => println!("Unknown F lsb: {:#06X}", lsb),
                 }
             },
-            _ => {
-                println!("Unknown opcode: {:#06X}", instruction.instruction)
-            },
+            _ => println!("Unknown opcode: {:#06X}", instruction.instruction),
         }
     }
 
-    fn op_fx65_load_memory(&mut self, instruction: Instruction) {
+    fn op_ex9e_skip_if_key_down(&mut self, instruction: Instruction, keyboard: &mut Keyboard) {
+        let xi = instruction.x();
+        let x = self.registers[xi];
+        let keycode = KEY_MAP[x as usize];
+        let is_down = keyboard.get_keystate(keycode).is_down();
+        if is_down {
+            self.program_counter += 2;
+        }
+    }
+
+    fn op_exa1_skip_if_key_not_down(&mut self, instruction: Instruction, keyboard: &mut Keyboard) {
+        let xi = instruction.x();
+        let x = self.registers[xi];
+        let keycode = KEY_MAP[x as usize];
+        let is_down = keyboard.get_keystate(keycode).is_down();
+        if !is_down {
+            self.program_counter += 2;
+        }
+    }
+
+    fn op_cxnn_random(&mut self, instruction: Instruction) {
+        let mut rng = rand::thread_rng();
+        let xi = instruction.x();
+        let value = instruction.nn();
+
+        let rand: u8 = rng.gen();
+        let result = value & rand;
+        self.registers[xi] = result;
+    }
+
+    fn op_fx65_load_memory(&mut self, _instruction: Instruction) {
         println!("todo: op_fx65_load_memory")
     }
 
-    fn op_fx55_store_memory(&mut self, instruction: Instruction) {
+    fn op_fx55_store_memory(&mut self, _instruction: Instruction) {
         println!("todo: op_fx55_store_memory")
     }
 
-    fn op_fx29_binary_coded_decimal_conversion(&mut self, instruction: Instruction) {
+    fn op_fx29_binary_coded_decimal_conversion(&mut self, _instruction: Instruction) {
         println!("todo: op_fx29_binary_coded_decimal_conversion")
     }
 
@@ -137,28 +200,28 @@ impl Computer {
         self.index_register = FONT_MEMORY_START + (5 * x as usize);
     }
 
-    fn op_fx0a_get_keyboard_input(&mut self, instruction: Instruction) {
+    fn op_fx0a_get_keyboard_input(&mut self, _instruction: Instruction) {
         println!("todo: op_fx0a_get_keyboard_input")
     }
 
-    fn op_fx1e_index_register_add(&mut self, instruction: Instruction) {
+    fn op_fx1e_index_register_add(&mut self, _instruction: Instruction) {
         println!("todo: op_fx1e_index_register_add")
     }
 
-    fn op_fx07_timer(&mut self, instruction: Instruction) {
+    fn op_fx07_timer(&mut self, _instruction: Instruction) {
         println!("todo: op_fx07_timer")
     }
 
-    fn op_fx15_timer(&mut self, instruction: Instruction) {
+    fn op_fx15_timer(&mut self, _instruction: Instruction) {
         println!("todo: op_fx15_timer")
     }
 
 
-    fn op_fx18_timer(&mut self, instruction: Instruction) {
+    fn op_fx18_timer(&mut self, _instruction: Instruction) {
         println!("todo: op_fx18_timer")
     }
 
-    fn op_8xy0_set(&mut self, instruction: Instruction) {
+    fn op_8xy0_set(&mut self, _instruction: Instruction) {
         println!("todo: op_8xy0_set")
     }
 
