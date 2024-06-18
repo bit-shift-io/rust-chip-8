@@ -64,7 +64,7 @@ impl SdlSystem {
         let height = u32::try_from(size.y).unwrap();
 
         let rect = Rect::new(pos_x, pos_y, width, height);
-        self.canvas.draw_rect(rect).unwrap();
+        self.canvas.fill_rect(rect).unwrap();
     }
 
     pub fn draw_filled_circle(&self, point: Point, radius: i32, color: Color) {
